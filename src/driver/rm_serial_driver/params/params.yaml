@@ -1,0 +1,5 @@
+rm_serial_driver:
+  ros__parameters:
+    vx_limit: 1.0
+    vy_limit: 1.0
+    wz_limit: 0.0

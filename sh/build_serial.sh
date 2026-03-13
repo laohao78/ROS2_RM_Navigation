@@ -1,0 +1,1 @@
+colcon build --symlink-install --packages-select rm_serial_driver

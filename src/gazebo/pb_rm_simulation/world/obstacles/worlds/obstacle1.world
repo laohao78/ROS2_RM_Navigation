@@ -1,0 +1,37 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <world name="default">
+    <!-- 基础环境：地面、光照 -->
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+    <include>
+      <uri>model://sun</uri>
+    </include>
+
+    <!-- 新增：加载 obstacle1 模型（放在原点） -->
+    <model name='obstacle1'>
+      <static>false</static>  <!-- 关闭静态，允许运动 -->
+      <pose>0.0 0.0 0.25 0 0 0</pose>  <!-- 原点位置，Z=0.25 适配圆柱体贴地 -->
+      <!-- 引入 obstacle1 模型文件 -->
+      <include>
+        <uri>file:///home/ros2/Desktop/pb_rmsimulation/src/rm_simulation/pb_rm_simulation/meshes/obstacles/obstacle1</uri>
+      </include>
+      <!-- 加载 obstacle1 运动插件 -->
+      <plugin name="obstacle1_motion" filename="/home/ros2/Desktop/pb_rmsimulation/src/rm_simulation/pb_rm_simulation/world/obstacles/lib/libobstacle1.so"/>
+    </model>
+
+    <!-- 新增：加载 obstacle2 模型（放在原点） -->
+    <model name='obstacle2'>
+      <static>false</static>  <!-- 关闭静态，允许运动 -->
+      <pose>-2.0 -3.0 0.25 0 0 0</pose>  <!-- 原点位置，Z=0.25 适配圆柱体贴地 -->
+      <!-- 引入 obstacle2 模型文件 -->
+      <include>
+        <uri>file:///home/ros2/Desktop/pb_rmsimulation/src/rm_simulation/pb_rm_simulation/meshes/obstacles/obstacle2</uri>
+      </include>
+      <!-- 加载 obstacle2 运动插件 -->
+      <plugin name="obstacle2_motion" filename="/home/ros2/Desktop/pb_rmsimulation/src/rm_simulation/pb_rm_simulation/world/obstacles/lib/libobstacle2.so"/>
+    </model>
+
+  </world>
+</sdf>
