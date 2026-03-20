@@ -30,6 +30,8 @@ killall gzserver gzclient
 |流程|
 |:--:|
 |![](.docs/TF.png)|
+|![](.docs/TF1.png)|
+
 
 
 `规划算法`：
@@ -110,6 +112,12 @@ nav_rviz:=True
 1. WSL中启动rviz2
     - [.wslconfig]("C:\Users\31320\.wslconfig"): 配置镜像网卡
     - 关闭防火墙
+
+    - ------------wsl eth死掉了---------------
+        1. 以管理员身份打开 PowerShell
+        2. wsl --shutdown
+        3. netsh winsock reset
+        4. 重启您的 Windows 计算机  
 ```sh
 export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
 export ROS_DOMAIN_ID=3
@@ -270,6 +278,7 @@ world:=RMUL2026H
 /livox/imu         # Livox雷达IMU数据，加速度/角速度
 /livox/lidar       # Livox雷达原始数据
 /livox/lidar/pointcloud # Livox雷达点云数据，环境感知
+/obstacle/odom     # thth - 应该是我添加的障碍物
 /parameter_events  # 参数变更事件，参数服务器通知
 /performance_metrics # 性能指标，系统/节点性能监控
 /robot_description # 机器人URDF描述，构建模型与TF
@@ -291,13 +300,23 @@ ros2 launch rm_nav_bringup processing.launch.py
 /segmentation/obstacle # 障碍物分割结果，环境感知
 ```
 ## ***lio***
+1. /Odometry = 数据包（含位置+速度+误差），给算法用的
+2. odom->base_link (TF) = 空间关系（仅位置+姿态），给坐标变换和可视化用的
+3. `关系：它们是同一个计算结果的两种不同输出形式，必须保持一致`
+4. /Laser_map 是 LIO建图生成的激光地图
 ```sh
 colcon build --symlink-install --packages-select rm_nav_bringup
 source install/setup.bash
 ros2 launch rm_nav_bringup lio.launch.py \
 lio:=fastlio \
 lio_rviz:=False
+
 python3 /opt/ros/humble/lib/python3.10/site-packages/tf2_tools/view_frames.py
+
+source install/setup.bash
+ros2 launch rm_nav_bringup lio.launch.py \
+lio:=fastlio \
+lio_rviz:=True
 #---------------------------------------------------------
 /Laser_map              # LIO建图生成的激光地图
 /Odometry                # LIO估算的里程计（姿态+位置）
@@ -305,8 +324,16 @@ python3 /opt/ros/humble/lib/python3.10/site-packages/tf2_tools/view_frames.py
 /cloud_registered        # LIO配准后的点云
 /cloud_registered_body   # LIO配准后的车体点云
 /path                    # 路径规划结果
+# rviz
+/clicked_point
+/goal_pose
+/initialpose
 ```
 ## ***localization***
+| 坐标系变换 | 发布者 | 特性 | 用途 | 为什么这样设计？ |
+| :--- | :--- | :--- | :--- | :--- |
+| `map` -> `odom` | SLAM / AMCL | 不连续、可跳变、全局准确 | 导航规划、全局定位 | 允许算法随时修正累积误差，哪怕瞬间“瞬移”也没关系，反正不影响底层电机。 |
+| `odom` -> `base_link` | 机器人驱动 | 连续、平滑、有漂移 | 底层控制、局部避障 | 保证控制器看到的运动符合物理规律，避免电机震荡、摔倒或机械损伤。 |
 ```sh
 colcon build --symlink-install --packages-select rm_nav_bringup
 source install/setup.bash
@@ -315,7 +342,7 @@ mode:=nav \
 localization:=slam_toolbox 
 python3 /opt/ros/humble/lib/python3.10/site-packages/tf2_tools/view_frames.py
 #---------------------------------------------------------
-/initialpose           # 初始位姿设定，定位/建图起点
+/initialpose           # thth 初始位姿设定，定位/建图起点
 /map                    # slam_toolbox建图生成的栅格地图
 /map_metadata             # 地图元数据（分辨率、原点等）
 /pose                    # slam_toolbox定位结果（机器人位姿）

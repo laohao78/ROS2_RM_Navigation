@@ -12,6 +12,7 @@
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 #include <nav_msgs/msg/path.hpp>
+#include <std_msgs/msg/float32.hpp>
 #include <rclcpp/publisher.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/subscription.hpp>
@@ -26,6 +27,7 @@ public:
 
 private:
   void cmdVelCallback(const geometry_msgs::msg::Twist::SharedPtr msg);
+  void cmdVelWzCallback(const std_msgs::msg::Float32::SharedPtr msg);
 
   void localPoseCallback(const nav_msgs::msg::Path::SharedPtr msg);
 
@@ -37,6 +39,7 @@ private:
   std::shared_ptr<tf2_ros::TransformListener> tf2_listener_;
 
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub_;
+  rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr cmd_vel_wz_sub_;
   rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr local_pose_sub_;
 
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_chassis_pub_;
@@ -49,6 +52,7 @@ private:
   double current_angle_;
   double base_link_angle_;
   float spin_speed_;
+  float cmd_vel_wz_ = 0.0f;
 };
 
 }  // namespace fake_vel_transform
