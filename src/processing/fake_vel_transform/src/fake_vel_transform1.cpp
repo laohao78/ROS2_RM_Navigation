@@ -5,6 +5,7 @@
 #include <rclcpp/logging.hpp>
 #include <rclcpp/qos.hpp>
 #include <rclcpp/utilities.hpp>
+#include <std_msgs/msg/float32.hpp>
 
 namespace fake_vel_transform
 {
@@ -30,6 +31,9 @@ FakeVelTransform::FakeVelTransform(const rclcpp::NodeOptions & options)
   // Create Publisher and Subscriber
   cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
     CMD_VEL_TOPIC, 1, std::bind(&FakeVelTransform::cmdVelCallback, this, std::placeholders::_1));
+  cmd_vel_wz_sub_ = this->create_subscription<std_msgs::msg::Float32>(
+    "/cmd_vel_wz", rclcpp::QoS(1),
+    std::bind(&FakeVelTransform::cmdVelWzCallback, this, std::placeholders::_1));
   cmd_vel_chassis_pub_ = this->create_publisher<geometry_msgs::msg::Twist>(
     AFTER_TF_CMD_VEL, rclcpp::QoS(rclcpp::KeepLast(1)));
   local_pose_sub_ = this->create_subscription<nav_msgs::msg::Path>(
@@ -77,8 +81,8 @@ void FakeVelTransform::cmdVelCallback(const geometry_msgs::msg::Twist::SharedPtr
     //aft_tf_vel.linear.y = -msg->linear.x * sin(angle_diff) + msg->linear.y * cos(angle_diff);
 
     //方式二：直接使用规划器的原始角速度，并取消底盘跟随云台旋转的影响
-    // 取消spin_speed替换，直接使用规划器的原始角速度thth
-    aft_tf_vel.angular.z = msg->angular.z ;  
+    // 使用来自 /cmd_vel_wz 的角速度（wz），线速度仍来自规划器
+    aft_tf_vel.angular.z = cmd_vel_wz_;
     // 取消底盘跟随云台旋转的影响，直接使用前进速度  
     aft_tf_vel.linear.x = msg->linear.x ;
     aft_tf_vel.linear.y = msg->linear.y ;        
@@ -93,6 +97,18 @@ void FakeVelTransform::cmdVelCallback(const geometry_msgs::msg::Twist::SharedPtr
   } catch (tf2::TransformException & ex) {
     RCLCPP_INFO(this->get_logger(), "Could not transform odom to base_link: %s", ex.what());
   }
+}
+
+// Receive external angular velocity (wz) as Float32 on /cmd_vel_wz
+void FakeVelTransform::cmdVelWzCallback(const std_msgs::msg::Float32::SharedPtr msg)
+{
+  if (!msg) {
+    return;
+  }
+  cmd_vel_wz_ = msg->data;
+  // Optionally update spin_speed_ from this topic
+  spin_speed_ = cmd_vel_wz_;
+  RCLCPP_DEBUG(this->get_logger(), "Received /cmd_vel_wz: %f", cmd_vel_wz_);
 }
 
 // Publish transform from base_link to base_link_fake
