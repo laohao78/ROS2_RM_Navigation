@@ -1,4 +1,4 @@
-# MY_nav - ROS2 导航仿真与实车系统
+# RM_Navigation - ROS2 导航仿真与实车系统
 
 > 基于ROS2的全向移动机器人导航系统，支持Gazebo仿真和真实机器人部署
 
